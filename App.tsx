@@ -7,7 +7,7 @@ import AssignmentCard from './components/AssignmentCard';
 import BooleanStringDisplay from './components/BooleanStringDisplay';
 import MatchView from './components/MatchView';
 import { SAMPLE_PROMPTS } from './constants';
-import { BrainCircuit, ShieldAlert, Users, Briefcase, PlusCircle, ShoppingCart } from 'lucide-react';
+import { BrainCircuit, ShieldAlert, Users, Briefcase, PlusCircle, ShoppingCart, Sparkles } from 'lucide-react';
 
 type View = 'consultants' | 'assignments' | 'matchmaking';
 
@@ -27,7 +27,7 @@ const App: React.FC = () => {
   // Loading States
   const [isLoading, setIsLoading] = useState(false);
 
-  // Separate criteria states to avoid overwriting inputs when switching tabs
+  // Separate criteria states
   const [consultantCriteria, setConsultantCriteria] = useState<SearchCriteria>({
     techStack: '',
     experienceLevel: 'Senior',
@@ -53,7 +53,7 @@ const App: React.FC = () => {
     }
     setIsLoading(true);
     setErrorMsg("");
-    setCandidates([]); // Clear previous results to show fresh search
+    setCandidates([]); 
     
     try {
       const data = await findCandidates(consultantCriteria);
@@ -73,7 +73,7 @@ const App: React.FC = () => {
     }
     setIsLoading(true);
     setErrorMsg("");
-    setAssignments([]); // Clear previous results
+    setAssignments([]); 
 
     try {
       const data = await searchAssignments(assignmentCriteria);
@@ -135,65 +135,90 @@ const App: React.FC = () => {
   const basketCount = selectedCandidates.length + selectedAssignments.length;
 
   return (
-    <div className="min-h-screen pb-20 bg-slate-50">
+    <div className="min-h-screen pb-20 relative overflow-hidden">
       
-      {/* Navbar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-indigo-600 cursor-pointer" onClick={() => setView('consultants')}>
-            <BrainCircuit size={32} />
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 hidden md:block">TalentAnalytics</h1>
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-violet-100/50 to-transparent -z-10" />
+      <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-200/30 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-[10%] left-[-10%] w-96 h-96 bg-violet-200/30 rounded-full blur-3xl -z-10" />
+
+      {/* Navbar - Glassmorphism */}
+      <header className="sticky top-4 z-50 px-4 mb-8">
+        <div className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl border border-white/40 shadow-lg shadow-slate-200/50 rounded-2xl px-6 h-20 flex items-center justify-between transition-all">
+          <div className="flex items-center gap-3 text-violet-700 cursor-pointer group" onClick={() => setView('consultants')}>
+            <div className="bg-violet-100 p-2 rounded-xl group-hover:bg-violet-200 transition-colors">
+              <BrainCircuit size={28} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-800 hidden md:block">Talent<span className="text-violet-600">Analytics</span></h1>
           </div>
           
-          <nav className="flex items-center bg-slate-100 p-1 rounded-lg">
+          <nav className="flex items-center bg-slate-100/50 p-1.5 rounded-full border border-slate-200/50">
             <button 
               onClick={() => setView('consultants')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'consultants' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all flex items-center gap-2 ${
+                view === 'consultants' 
+                  ? 'bg-white text-violet-700 shadow-md shadow-slate-200' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+              }`}
             >
-              <Users size={16}/> 
+              <Users size={18}/> 
               <span className="hidden sm:inline">Konsulter</span>
               {selectedCandidates.length > 0 && (
-                <span className={`ml-1 text-xs px-2 py-0.5 rounded-full font-bold ${view === 'consultants' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+                <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'consultants' ? 'bg-violet-100 text-violet-700' : 'bg-slate-200 text-slate-500'}`}>
                   {selectedCandidates.length}
                 </span>
               )}
             </button>
             <button 
               onClick={() => setView('assignments')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'assignments' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all flex items-center gap-2 ${
+                view === 'assignments' 
+                  ? 'bg-white text-emerald-600 shadow-md shadow-slate-200' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+              }`}
             >
-              <Briefcase size={16}/> 
+              <Briefcase size={18}/> 
               <span className="hidden sm:inline">Uppdrag</span>
               {selectedAssignments.length > 0 && (
-                <span className={`ml-1 text-xs px-2 py-0.5 rounded-full font-bold ${view === 'assignments' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
+                <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'assignments' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
                   {selectedAssignments.length}
                 </span>
               )}
             </button>
             <button 
               onClick={() => setView('matchmaking')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'matchmaking' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all flex items-center gap-2 ml-1 ${
+                view === 'matchmaking' 
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+              }`}
             >
-              <ShoppingCart size={16}/> 
+              <ShoppingCart size={18}/> 
               <span className="hidden sm:inline">Matchning</span>
-              {basketCount > 0 && <span className="bg-white/20 px-1.5 rounded-full text-xs">{basketCount}</span>}
+              {basketCount > 0 && <span className="bg-white text-violet-600 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm">{basketCount}</span>}
             </button>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 mt-8">
+      <main className="max-w-7xl mx-auto px-4">
         
         {/* VIEW: CONSULTANTS */}
         <div style={{ display: view === 'consultants' ? 'block' : 'none' }} className="animate-fade-in-up">
-            <div className="mb-8 flex justify-between items-end">
+            <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Hitta Konsulter</h2>
-                  <p className="text-slate-500">Sök efter kandidater och lägg till de bästa i matchningskorgen.</p>
+                  <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Hitta Konsulter</h2>
+                  <p className="text-slate-500 text-lg">AI-driven sourcing som hittar dolda talanger.</p>
                </div>
-               <div className="hidden md:block">
+               <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
                  {SAMPLE_PROMPTS.map((_, i) => (
-                   <button key={i} onClick={() => loadSample(i)} className="text-xs bg-white border border-slate-200 px-3 py-1 rounded-full mr-2 hover:border-indigo-300 text-slate-500">Exempel {i+1}</button>
+                   <button 
+                    key={i} 
+                    onClick={() => loadSample(i)} 
+                    className="whitespace-nowrap text-xs font-medium bg-white/50 border border-violet-100 px-4 py-2 rounded-full hover:bg-violet-50 hover:border-violet-200 text-violet-600 transition-colors flex items-center gap-1 shadow-sm"
+                   >
+                    <Sparkles size={12}/> Exempel {i+1}
+                   </button>
                  ))}
                </div>
             </div>
@@ -206,12 +231,17 @@ const App: React.FC = () => {
               isLoading={isLoading}
             />
 
-            {errorMsg && view === 'consultants' && <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg flex gap-2 items-center"><ShieldAlert/>{errorMsg}</div>}
+            {errorMsg && view === 'consultants' && (
+              <div className="mt-6 p-4 bg-red-50/80 backdrop-blur border border-red-100 text-red-700 rounded-2xl flex gap-3 items-center shadow-sm animate-pulse">
+                <ShieldAlert className="flex-shrink-0"/>
+                {errorMsg}
+              </div>
+            )}
 
             {candidates.length > 0 && (
-               <div className="mt-8">
+               <div className="mt-10">
                   <BooleanStringDisplay booleanString={booleanString} />
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                      {candidates.map((c, i) => (
                         <CandidateCard 
                           key={c.id} 
@@ -226,9 +256,12 @@ const App: React.FC = () => {
             )}
             
             {!isLoading && candidates.length === 0 && !errorMsg && (
-              <div className="mt-12 text-center text-slate-400">
-                <Users size={48} className="mx-auto mb-2 opacity-20"/>
-                <p>Gör en sökning för att se kandidater här.</p>
+              <div className="mt-20 text-center">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-violet-50 mb-6 shadow-inner">
+                   <Users size={48} className="text-violet-200" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Redo för headhunting</h3>
+                <p className="text-slate-500 max-w-md mx-auto">Ange sökparametrar ovan för att låta AI:n scanna LinkedIn och öppna webben efter relevanta profiler.</p>
               </div>
             )}
         </div>
@@ -236,8 +269,8 @@ const App: React.FC = () => {
         {/* VIEW: ASSIGNMENTS */}
         <div style={{ display: view === 'assignments' ? 'block' : 'none' }} className="animate-fade-in-up">
             <div className="mb-8">
-               <h2 className="text-2xl font-bold text-slate-900">Hitta Uppdrag</h2>
-               <p className="text-slate-500">Scanna marknaden (Verama, Ework, etc) efter aktiva uppdrag.</p>
+               <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Hitta Uppdrag</h2>
+               <p className="text-slate-500 text-lg">Realtidsscanning av konsultmarknaden.</p>
             </div>
 
             <SearchForm 
@@ -248,10 +281,15 @@ const App: React.FC = () => {
               isLoading={isLoading}
             />
 
-            {errorMsg && view === 'assignments' && <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg flex gap-2 items-center"><ShieldAlert/>{errorMsg}</div>}
+            {errorMsg && view === 'assignments' && (
+              <div className="mt-6 p-4 bg-red-50/80 backdrop-blur border border-red-100 text-red-700 rounded-2xl flex gap-3 items-center shadow-sm">
+                <ShieldAlert className="flex-shrink-0"/>
+                {errorMsg}
+              </div>
+            )}
 
             {assignments.length > 0 && (
-               <div className="mt-8 space-y-6">
+               <div className="mt-10 space-y-8">
                   <div className="grid gap-6 md:grid-cols-2">
                      {assignments.map((a) => (
                         <AssignmentCard 
@@ -263,18 +301,25 @@ const App: React.FC = () => {
                      ))}
                   </div>
                   <div className="text-center pt-4">
-                     <button onClick={handleLoadMoreAssignments} disabled={isLoading} className="px-6 py-2 bg-white border border-slate-300 rounded-full hover:bg-slate-50 font-medium text-slate-600 flex items-center gap-2 mx-auto">
-                        {isLoading ? <div className="animate-spin h-4 w-4 border-2 border-slate-500 rounded-full"/> : <PlusCircle size={16}/>}
-                        Hämta fler
+                     <button 
+                        onClick={handleLoadMoreAssignments} 
+                        disabled={isLoading} 
+                        className="px-8 py-3 bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-slate-600 flex items-center gap-2 mx-auto shadow-sm"
+                     >
+                        {isLoading ? <div className="animate-spin h-4 w-4 border-2 border-slate-500 rounded-full"/> : <PlusCircle size={18}/>}
+                        Hämta fler uppdrag
                      </button>
                   </div>
                </div>
             )}
 
              {!isLoading && assignments.length === 0 && !errorMsg && (
-              <div className="mt-12 text-center text-slate-400">
-                <Briefcase size={48} className="mx-auto mb-2 opacity-20"/>
-                <p>Gör en sökning för att se uppdrag här.</p>
+              <div className="mt-20 text-center">
+                 <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-50 mb-6 shadow-inner">
+                   <Briefcase size={48} className="text-emerald-200" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Uppdragsdatabas</h3>
+                <p className="text-slate-500 max-w-md mx-auto">Sök efter aktiva uppdrag från de största mäklarna och direktkunder.</p>
               </div>
             )}
         </div>
