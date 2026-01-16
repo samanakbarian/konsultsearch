@@ -1,0 +1,5 @@
+{
+  "name": "TalentAnalytics",
+  "description": "En AI-driven rekryteringsassistent som identifierar och rankar IT-konsulter genom intelligent matchning och boolesk söklogik.",
+  "requestFramePermissions": []
+}
