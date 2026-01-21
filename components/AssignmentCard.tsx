@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Assignment } from '../types';
-import { Building2, MapPin, Check, Plus, Timer, Globe2, Sparkles } from 'lucide-react';
+import { Building2, MapPin, Check, Plus, CalendarClock, Globe2, Zap, ChevronDown, ChevronUp, FileText, AlertCircle } from 'lucide-react';
 
 interface Props {
   assignment: Assignment;
@@ -10,6 +10,8 @@ interface Props {
 }
 
 const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelect, hideSelection }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const isDateUnknown = !assignment.datePosted || assignment.datePosted === 'Okänt';
   const isActive = assignment.isActive !== false;
   
@@ -18,16 +20,16 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
 
   return (
     <div 
-      className={`relative group bg-white rounded-[2rem] p-1 transition-all duration-300 hover:-translate-y-1 overflow-hidden ${
+      className={`relative group bg-white rounded-[2rem] transition-all duration-300 overflow-hidden flex flex-col ${
         isSelected 
           ? 'ring-2 ring-emerald-500 shadow-xl shadow-emerald-500/20' 
-          : 'border border-slate-200/60 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.15)]'
+          : 'border border-slate-200/60 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.15)] hover:-translate-y-1'
       } ${!isActive ? 'opacity-75 grayscale-[0.8]' : ''}`}
     >
       {/* Background Decor */}
       <div className={`absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 ${isSelected ? 'bg-emerald-100' : ''}`} />
 
-      <div className="relative p-6 h-full flex flex-col z-10">
+      <div className="relative p-6 z-10 flex-grow">
         
         {/* Header: Company & Title */}
         <div className="flex items-start gap-5 mb-4">
@@ -38,12 +40,12 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
 
            <div className="flex-1 min-w-0 pt-1">
              <div className="flex justify-between items-start gap-4">
-                <h3 className="text-base font-bold text-slate-800 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors" title={assignment.title}>
+                <h3 className="text-base font-bold text-slate-800 leading-snug group-hover:text-emerald-700 transition-colors" title={assignment.title}>
                   {assignment.title}
                 </h3>
                 {isFresh && (
-                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wide">
-                        <Sparkles size={8} fill="currentColor"/> Ny
+                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200">
+                        <Zap size={8} fill="currentColor"/> Ny
                     </span>
                 )}
              </div>
@@ -53,54 +55,98 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
                  {assignment.client}
                </span>
                <span className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
-                 <MapPin size={12} />
+                 <MapPin size={12} className="text-emerald-400" />
                  {assignment.location}
                </span>
              </div>
            </div>
         </div>
 
-        {/* Description */}
-        <div className="mb-6 relative">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-200 to-transparent rounded-full"></div>
-          <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed pl-4">
-            {assignment.description}
-          </p>
-        </div>
+        {/* Short Description (Visible when collapsed) */}
+        {!isExpanded && (
+            <div className="mb-2 relative">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-200 to-transparent rounded-full"></div>
+            <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed pl-4">
+                {assignment.description}
+            </p>
+            </div>
+        )}
 
-        {/* Footer: Meta & Actions */}
-        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+        {/* Expanded Details */}
+        {isExpanded && (
+            <div className="space-y-4 animate-fade-in mt-2">
+                
+                {/* Full Description */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 className="text-xs font-bold uppercase text-slate-400 flex items-center gap-2 mb-2">
+                        <FileText size={12} /> Uppdragsbeskrivning
+                    </h4>
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                        {assignment.description}
+                    </p>
+                </div>
+
+                {/* Deadlines & Meta */}
+                <div className="flex gap-4">
+                    {assignment.deadline && (
+                        <div className="flex-1 bg-amber-50 p-3 rounded-xl border border-amber-100 flex items-start gap-3">
+                            <AlertCircle size={16} className="text-amber-500 mt-0.5" />
+                            <div>
+                                <span className="block text-[10px] font-bold uppercase text-amber-700">Deadline</span>
+                                <span className="text-sm font-medium text-amber-900">{assignment.deadline}</span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-start gap-3">
+                         <CalendarClock size={16} className="text-slate-400 mt-0.5" />
+                         <div>
+                            <span className="block text-[10px] font-bold uppercase text-slate-400">Publicerad</span>
+                            <span className="text-sm font-medium text-slate-600">{assignment.datePosted || 'Nyligen'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+      </div>
+
+      {/* Footer: Meta & Actions */}
+      <div className="mt-auto pt-3 pb-3 px-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
            
-           {/* Left: Source & Date */}
-           <div className="flex flex-col gap-1">
-             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                <Globe2 size={12} className="text-emerald-500" />
-                <span>Webb</span>
-             </div>
-             <div className={`flex items-center gap-1.5 text-[10px] font-medium ${isDateUnknown ? 'text-amber-500' : 'text-slate-400'}`}>
-                <Timer size={10} />
-                {assignment.datePosted || 'Nyligen'}
-             </div>
-           </div>
+           <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs font-bold text-slate-500 hover:text-emerald-600 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-emerald-50"
+            >
+              {isExpanded ? (
+                <>Dölj detaljer <ChevronUp size={14} /></>
+              ) : (
+                <>Läs hela uppdraget <ChevronDown size={14} /></>
+              )}
+           </button>
 
-           {/* Right: Actions */}
            <div className="flex items-center gap-2">
                 {!hideSelection && onToggleSelect && (
                   <button 
                     onClick={() => onToggleSelect(assignment)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border ${
+                    className={`flex items-center gap-2 pr-4 pl-3 py-2 rounded-full transition-all border ${
                       isSelected 
                         ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                        : 'bg-white text-slate-400 border-slate-200 hover:border-emerald-300 hover:text-emerald-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30'
                     }`}
-                    title={isSelected ? "Ta bort" : "Lägg till"}
                   >
-                    {isSelected ? <Check size={16} strokeWidth={3} /> : <Plus size={18} />}
+                    {isSelected ? (
+                        <>
+                        <Check size={14} strokeWidth={3} />
+                        <span className="text-xs font-bold">Vald</span>
+                        </>
+                    ) : (
+                        <>
+                        <Plus size={14} />
+                        <span className="text-xs font-bold">Välj</span>
+                        </>
+                    )}
                   </button>
                 )}
            </div>
-        </div>
-
       </div>
     </div>
   );
