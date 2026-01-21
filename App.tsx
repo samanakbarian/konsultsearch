@@ -7,7 +7,7 @@ import AssignmentCard from './components/AssignmentCard';
 import BooleanStringDisplay from './components/BooleanStringDisplay';
 import MatchView from './components/MatchView';
 import { SAMPLE_PROMPTS } from './constants';
-import { BrainCircuit, ShieldAlert, Users, Briefcase, PlusCircle, ShoppingCart, Sparkles } from 'lucide-react';
+import { BrainCircuit, ShieldAlert, Users, Briefcase, PlusCircle, ShoppingCart, Sparkles, Heart } from 'lucide-react';
 
 type View = 'consultants' | 'assignments' | 'matchmaking';
 
@@ -135,7 +135,7 @@ const App: React.FC = () => {
   const basketCount = selectedCandidates.length + selectedAssignments.length;
 
   return (
-    <div className="min-h-screen pb-20 relative overflow-hidden">
+    <div className="min-h-screen pb-20 relative overflow-hidden flex flex-col">
       
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-violet-100/50 to-transparent -z-10" />
@@ -201,7 +201,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4">
+      <main className="max-w-7xl mx-auto px-4 flex-grow w-full">
         
         {/* VIEW: CONSULTANTS */}
         <div style={{ display: view === 'consultants' ? 'block' : 'none' }} className="animate-fade-in-up">
@@ -335,6 +335,13 @@ const App: React.FC = () => {
         )}
 
       </main>
+      
+      {/* Footer */}
+      <footer className="mt-12 py-6 text-center">
+         <p className="text-slate-400 text-sm font-medium flex items-center justify-center gap-1.5">
+           Utvecklad av <span className="text-slate-600 font-bold">Saman Akbarian</span>
+         </p>
+      </footer>
     </div>
   );
 };

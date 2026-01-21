@@ -1,6 +1,6 @@
 import React from 'react';
 import { Assignment } from '../types';
-import { Building2, MapPin, Calendar, ExternalLink, ArrowRight, Clock, AlertCircle, Plus, Check, Briefcase } from 'lucide-react';
+import { Building2, MapPin, Check, Plus, Timer, Globe2, Sparkles } from 'lucide-react';
 
 interface Props {
   assignment: Assignment;
@@ -12,87 +12,95 @@ interface Props {
 const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelect, hideSelection }) => {
   const isDateUnknown = !assignment.datePosted || assignment.datePosted === 'Okänt';
   const isActive = assignment.isActive !== false;
+  
+  // Logic to determine "freshness" visual
+  const isFresh = !isDateUnknown && (assignment.datePosted?.includes('tim') || assignment.datePosted?.includes('idag'));
 
   return (
-    <div className={`bg-white rounded-[1.5rem] p-1 border transition-all duration-300 hover:-translate-y-1 group ${isSelected ? 'ring-2 ring-emerald-500 shadow-xl shadow-emerald-500/20 border-transparent' : !isActive ? 'border-red-100 bg-red-50/20' : 'border-white shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)]'}`}>
-      <div className="p-6 h-full flex flex-col">
-        <div className="flex justify-between items-start gap-4 mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-                 {!isActive && (
-                 <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full border border-red-200 font-bold uppercase tracking-wide">
-                   Avslutad / Gammal
-                 </span>
-              )}
-              {isActive && (
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full border border-emerald-100 font-bold uppercase tracking-wide flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/> Aktiv
-                  </span>
-              )}
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-800 group-hover:text-emerald-600 transition-colors flex items-center gap-2 leading-tight">
-              {assignment.title}
-            </h3>
-            <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm mt-3 font-medium">
-              <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg">
-                <Building2 size={14} className="text-emerald-500/70" /> {assignment.client}
-              </span>
-              <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg">
-                <MapPin size={14} className="text-emerald-500/70" /> {assignment.location}
-              </span>
-            </div>
-          </div>
-          
-          {!hideSelection && onToggleSelect && (
-            <button 
-              onClick={() => onToggleSelect(assignment)}
-              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                isSelected 
-                  ? 'bg-emerald-600 text-white shadow-emerald-500/30' 
-                  : 'bg-white border border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'
-              }`}
-            >
-              {isSelected ? <Check size={14} /> : <Plus size={14} />}
-              {isSelected ? 'Vald' : 'Välj'}
-            </button>
-          )}
-        </div>
+    <div 
+      className={`relative group bg-white rounded-[2rem] p-1 transition-all duration-300 hover:-translate-y-1 overflow-hidden ${
+        isSelected 
+          ? 'ring-2 ring-emerald-500 shadow-xl shadow-emerald-500/20' 
+          : 'border border-slate-200/60 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.15)]'
+      } ${!isActive ? 'opacity-75 grayscale-[0.8]' : ''}`}
+    >
+      {/* Background Decor */}
+      <div className={`absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 ${isSelected ? 'bg-emerald-100' : ''}`} />
 
-        <div className="flex-grow">
-            <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-            {assignment.description}
-            </p>
-        </div>
+      <div className="relative p-6 h-full flex flex-col z-10">
+        
+        {/* Header: Company & Title */}
+        <div className="flex items-start gap-5 mb-4">
+           {/* Company Logo / Placeholder */}
+           <div className={`w-14 h-14 flex-shrink-0 rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 ${isSelected ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-600'}`}>
+              <Building2 size={24} />
+           </div>
 
-        <div className="flex items-center justify-between pt-5 border-t border-slate-100 mt-auto">
-          <div className="flex flex-col gap-1">
-             <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold uppercase tracking-wide">
-                <Calendar size={12} className={isDateUnknown ? "text-amber-500" : "text-slate-400"} />
-                {isDateUnknown ? (
-                  <span className="text-amber-500">Datum saknas</span>
-                ) : (
-                  <span>{assignment.datePosted}</span>
+           <div className="flex-1 min-w-0 pt-1">
+             <div className="flex justify-between items-start gap-4">
+                <h3 className="text-base font-bold text-slate-800 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors" title={assignment.title}>
+                  {assignment.title}
+                </h3>
+                {isFresh && (
+                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wide">
+                        <Sparkles size={8} fill="currentColor"/> Ny
+                    </span>
                 )}
              </div>
-             {assignment.deadline && (
-               <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <Clock size={12} />
-                  Deadline: {assignment.deadline}
-               </div>
-             )}
-          </div>
-          
-          {assignment.url && (
-            <a 
-              href={assignment.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group/link flex items-center gap-1.5 text-sm font-bold text-emerald-600 hover:text-emerald-800 transition-colors bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg"
-            >
-              Ansök <ArrowRight size={14} className="group-hover/link:translate-x-0.5 transition-transform" />
-            </a>
-          )}
+
+             <div className="flex flex-col gap-1 mt-1.5">
+               <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 truncate">
+                 {assignment.client}
+               </span>
+               <span className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
+                 <MapPin size={12} />
+                 {assignment.location}
+               </span>
+             </div>
+           </div>
         </div>
+
+        {/* Description */}
+        <div className="mb-6 relative">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-200 to-transparent rounded-full"></div>
+          <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed pl-4">
+            {assignment.description}
+          </p>
+        </div>
+
+        {/* Footer: Meta & Actions */}
+        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+           
+           {/* Left: Source & Date */}
+           <div className="flex flex-col gap-1">
+             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <Globe2 size={12} className="text-emerald-500" />
+                <span>Webb</span>
+             </div>
+             <div className={`flex items-center gap-1.5 text-[10px] font-medium ${isDateUnknown ? 'text-amber-500' : 'text-slate-400'}`}>
+                <Timer size={10} />
+                {assignment.datePosted || 'Nyligen'}
+             </div>
+           </div>
+
+           {/* Right: Actions */}
+           <div className="flex items-center gap-2">
+                {!hideSelection && onToggleSelect && (
+                  <button 
+                    onClick={() => onToggleSelect(assignment)}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border ${
+                      isSelected 
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                        : 'bg-white text-slate-400 border-slate-200 hover:border-emerald-300 hover:text-emerald-600'
+                    }`}
+                    title={isSelected ? "Ta bort" : "Lägg till"}
+                  >
+                    {isSelected ? <Check size={16} strokeWidth={3} /> : <Plus size={18} />}
+                  </button>
+                )}
+           </div>
+        </div>
+
       </div>
     </div>
   );

@@ -4,44 +4,38 @@ import { SearchCriteria, SearchResult, Assignment, Candidate, MatchResult } from
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Updated to the recommended model for text tasks
+// Using Flash for speed, but with very strict settings
 const modelId = "gemini-3-flash-preview"; 
 
 export const findCandidates = async (criteria: SearchCriteria): Promise<SearchResult> => {
+  // STRICT PROMPT: No URLs requested
   const prompt = `
-    Act as an Expert Technical Recruiter.
+    Role: Technical Recruiter.
+    Task: Extract real IT consultant profiles based on search criteria.
     
-    Goal: Find REAL IT Consultant PROFILES (People). 
-    
-    QUANTITY TARGET: Find at least 10-15 high-quality profiles that match the criteria. Do not stop at just a few.
-
-    CRITICAL: Do NOT return job advertisements, assignments, or company descriptions. Only return individual profiles.
-
     Criteria:
     - Role: ${criteria.role}
-    - Tech Stack: ${criteria.techStack}
+    - Tech: ${criteria.techStack}
     - Level: ${criteria.experienceLevel}
     - Location: ${criteria.location}
-    - Keywords: ${criteria.keywords}
-
-    Step 1: Create a boolean search string for LinkedIn (site:linkedin.com/in).
-    Step 2: Use Google Search to find profiles matching the boolean string.
-    Step 3: Parse and rank the top 10-15 candidates.
-    Step 4: Return JSON.
     
-    JSON Structure:
+    Instructions:
+    1. Find REAL people.
+    2. Do NOT guess URLs. Do NOT output a profileUrl field.
+    3. Focus on accurate Names, Current Titles, and Skills.
+    
+    Return JSON structure:
     {
-      "generatedBooleanString": "string",
+      "generatedBooleanString": "string (The boolean query you used)",
       "candidates": [
         {
-          "name": "string (Real Name)",
+          "name": "string",
           "currentTitle": "string",
           "location": "string",
           "matchScore": number (0-100),
           "skills": ["string"],
-          "summary": "string (Swedish)",
-          "justification": "string (Swedish - why this PERSON fits)",
-          "profileUrl": "string"
+          "summary": "string (Short professional summary in Swedish)",
+          "justification": "string (Why is this person a match? in Swedish)"
         }
       ]
     }
@@ -53,34 +47,33 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a headhunter. You find PEOPLE, not JOBS. Output strictly JSON.",
-        temperature: 0.2,
+        // Temperature 0.0 ensures the model is as deterministic and factual as possible
+        temperature: 0.0, 
+        systemInstruction: "You are a precise data extraction engine. You output valid JSON only. You do not hallucinate links.",
       },
     });
 
     let text = response.text;
     
-    // Fallback if getter returns undefined but content exists
+    // Fallback extraction
     if (!text && response.candidates?.[0]?.content?.parts) {
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) {
-        console.error("Gemini Empty Response:", JSON.stringify(response, null, 2));
-        throw new Error("Inget svar från AI. Modellen returnerade ingen text.");
-    }
+    if (!text) throw new Error("Inget svar från AI.");
     
-    // Robust JSON extraction for Object
+    // JSON Cleaning
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
     if (start !== -1 && end !== -1 && end > start) {
         text = text.substring(start, end + 1);
     } else {
-        // Fallback
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     }
 
     const parsedData = JSON.parse(text) as SearchResult;
+    
+    // Assign IDs client-side
     parsedData.candidates = parsedData.candidates.map((c, i) => ({
       ...c,
       id: `cand_${i}_${Date.now()}`
@@ -89,43 +82,40 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
 
   } catch (error) {
     console.error("Candidate Search Error:", error);
-    throw new Error(error instanceof Error ? error.message : "Kunde inte hitta kandidater.");
+    throw new Error("Kunde inte hämta kandidater. Försök igen.");
   }
 };
 
-// Pure assignment search without candidate matching
 export const searchAssignments = async (criteria: SearchCriteria, existingAssignments: Assignment[] = []): Promise<Assignment[]> => {
   const today = new Date().toISOString().split('T')[0];
-  const exclusionList = existingAssignments.map(a => `${a.title} (${a.client})`).join(', ');
+  const exclusionList = existingAssignments.map(a => a.title).join(', ');
   
+  // STRICT PROMPT: No URLs requested
   const prompt = `
-    Act as a Sales Manager. Find ACTIVE IT consulting assignments (konsultuppdrag) in Sweden.
+    Role: Sales Manager.
+    Task: Find active IT assignments in Sweden.
     Date: ${today}.
-    
-    CRITICAL: Do NOT return candidates or personal profiles. Return JOB POSTINGS only.
     
     Criteria:
     - Role: ${criteria.role}
     - Tech: ${criteria.techStack}
-    - Location: ${criteria.location}
-    - Seniority: ${criteria.experienceLevel}
-
-    Exclude these (already found): [${exclusionList}]
-
-    Sources: Verama, Ework, Uppdrag.net, Opic, Allego, Cinode, LinkedIn Jobs.
     
-    Validate dates! Only include active/fresh listings.
+    Instructions:
+    1. Identify the CLIENT or BROKER name clearly (e.g. Ework, Verama, Trafikverket).
+    2. Do NOT guess specific deep-links or URLs. Do NOT output a 'url' field.
+    3. Ensure the assignment is active/recent.
+
+    Exclude titles: [${exclusionList}]
 
     Return JSON:
     [
       {
-        "title": "string (Assignment Title)",
-        "client": "string (End Client or Broker)",
-        "description": "string (Swedish)",
+        "title": "string",
+        "client": "string (Broker or End Customer)",
+        "description": "string (Short summary in Swedish)",
         "location": "string",
-        "url": "string",
-        "deadline": "string",
-        "datePosted": "string",
+        "deadline": "string (or 'Snarast')",
+        "datePosted": "string (e.g. '2 dagar sedan')",
         "isActive": boolean
       }
     ]
@@ -137,24 +127,19 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are a Sales Manager finding Swedish IT assignments. Output JSON only.",
-        temperature: 0.1,
+        temperature: 0.0,
+        systemInstruction: "You are a strict data scraper. JSON output only. No fake links.",
       },
     });
 
     let text = response.text;
 
-    // Fallback
     if (!text && response.candidates?.[0]?.content?.parts) {
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) {
-        console.error("Gemini Empty Response (Assignments):", JSON.stringify(response, null, 2));
-        throw new Error("Inget svar från AI vid uppdragssökning.");
-    }
+    if (!text) throw new Error("Inget svar från AI.");
     
-    // Robust JSON extraction for Array
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
     if (start !== -1 && end !== -1 && end > start) {
@@ -164,6 +149,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
     }
 
     const assignments = JSON.parse(text) as Assignment[];
+    
     return assignments.map((a, i) => ({
       ...a,
       id: `assign_${i}_${Date.now()}`
@@ -175,7 +161,6 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
   }
 };
 
-// Dedicated matching function
 export const performMatchmaking = async (candidates: Candidate[], assignments: Assignment[]): Promise<MatchResult[]> => {
   if (candidates.length === 0 || assignments.length === 0) return [];
 
@@ -183,26 +168,22 @@ export const performMatchmaking = async (candidates: Candidate[], assignments: A
   const assignStr = JSON.stringify(assignments.map(a => ({ id: a.id, title: a.title, client: a.client, description: a.description })));
 
   const prompt = `
-    Act as a Senior Account Manager. 
-    
-    Task: Matrix Match these Consultants to these Assignments.
+    Role: Senior Account Manager.
+    Task: Matrix Match Consultants to Assignments.
     
     Consultants: ${candStr}
     Assignments: ${assignStr}
 
-    For EACH pair that makes sense (where there is a decent fit), provide a match analysis.
-    If a consultant fits multiple assignments, list them all.
-    If an assignment fits multiple consultants, list them all.
-
-    Return JSON:
+    Return JSON array of matches. Only include meaningful matches (>60%).
+    
     [
       {
-        "assignmentId": "id from input",
-        "candidateId": "id from input",
+        "assignmentId": "string",
+        "candidateId": "string",
         "matchScore": number (0-100),
-        "reason": "string (Why is this a good match? In Swedish)",
-        "strengths": ["string", "string"],
-        "gaps": ["string", "string"]
+        "reason": "string (Swedish analysis)",
+        "strengths": ["string"],
+        "gaps": ["string"]
       }
     ]
   `;
@@ -212,24 +193,19 @@ export const performMatchmaking = async (candidates: Candidate[], assignments: A
       model: modelId,
       contents: prompt,
       config: {
-        systemInstruction: "You are an expert matcher. Be critical but constructive. Output JSON only.",
-        temperature: 0.2,
+        temperature: 0.1,
+        systemInstruction: "Output JSON only.",
       },
     });
 
     let text = response.text;
-
-    // Fallback
+    
     if (!text && response.candidates?.[0]?.content?.parts) {
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) {
-        console.error("Gemini Empty Response (Match):", JSON.stringify(response, null, 2));
-        throw new Error("Inget svar från AI vid matchning.");
-    }
-    
-    // Robust JSON extraction for Array
+    if (!text) throw new Error("Inget svar vid matchning.");
+
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
     if (start !== -1 && end !== -1 && end > start) {
