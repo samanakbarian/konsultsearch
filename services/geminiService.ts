@@ -11,7 +11,7 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
   // STRICT PROMPT: No URLs requested
   const prompt = `
     Role: Technical Recruiter.
-    Task: Extract real IT consultant profiles based on search criteria.
+    Task: Extract **10-15** real IT consultant profiles based on search criteria.
     
     Criteria:
     - Role: ${criteria.role}
@@ -20,7 +20,7 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
     - Location: ${criteria.location}
     
     Instructions:
-    1. Find REAL people.
+    1. Find **10-15** REAL people. If fewer are found, return all found.
     2. Do NOT guess URLs. Do NOT output a profileUrl field.
     3. Focus on accurate Names, Current Titles, and Skills.
     
@@ -93,7 +93,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
   // STRICT PROMPT: No URLs requested, Focus on CONSULTING GIGS
   const prompt = `
     Role: Sales Manager specializing in IT Consulting.
-    Task: Find active **CONSULTANT ASSIGNMENTS** (Konsultuppdrag) in Sweden.
+    Task: Find **at least 10** active **CONSULTANT ASSIGNMENTS** (Konsultuppdrag) in Sweden.
     Date: ${today}.
     
     Criteria:
@@ -102,13 +102,14 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
     - Location: ${criteria.location}
     
     Instructions:
-    1. **STRICTLY EXCLUDE permanent jobs** (Tillsvidareanställning/Fast anställning).
-    2. Look for keywords like "Konsultuppdrag", "Interim", "Freelance", "Contract", "Uppdrag".
-    3. Identify the CLIENT (End Customer) clearly.
-    4. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
-    5. **CRITICAL: You CANNOT guess URLs.** Only include a 'url' if the Google Search tool explicitly returns a link to the assignment. If not found, leave 'url' as empty string "".
-    6. Ensure the assignment is active/recent.
-    7. STRICTLY respect the Location criteria (${criteria.location}).
+    1. Find **10-15** distinct assignments. If fewer exist, return all available.
+    2. **STRICTLY EXCLUDE permanent jobs** (Tillsvidareanställning/Fast anställning).
+    3. Look for keywords like "Konsultuppdrag", "Interim", "Freelance", "Contract", "Uppdrag".
+    4. Identify the CLIENT (End Customer) clearly.
+    5. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
+    6. **CRITICAL: You CANNOT guess URLs.** Only include a 'url' if the Google Search tool explicitly returns a link to the assignment. If not found, leave 'url' as empty string "".
+    7. Ensure the assignment is active/recent.
+    8. STRICTLY respect the Location criteria (${criteria.location}).
 
     Exclude titles: [${exclusionList}]
 
