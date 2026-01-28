@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Assignment } from '../types';
-import { Building2, MapPin, Check, Plus, CalendarClock, Globe2, Zap, ChevronDown, ChevronUp, FileText, AlertCircle, ExternalLink, Link2 } from 'lucide-react';
+import { Building2, MapPin, Check, Plus, CalendarClock, Globe2, Zap, ChevronDown, ChevronUp, FileText, AlertCircle, ExternalLink, Link2, Search } from 'lucide-react';
 
 interface Props {
   assignment: Assignment;
@@ -17,6 +17,15 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
   
   // Logic to determine "freshness" visual
   const isFresh = !isDateUnknown && (assignment.datePosted?.includes('tim') || assignment.datePosted?.includes('idag'));
+
+  // Fallback Link Logic
+  // If the AI didn't provide a URL, or provided a suspicious short string, we create a search query.
+  const hasValidUrl = assignment.url && assignment.url.length > 8 && (assignment.url.startsWith('http') || assignment.url.startsWith('www'));
+  
+  // Updated search query to target Consultant Assignments specifically
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${assignment.title} ${assignment.client} ${assignment.location || 'Sverige'} konsultuppdrag`)}`;
+  const targetUrl = hasValidUrl ? assignment.url! : searchUrl;
+  const isFallback = !hasValidUrl;
 
   return (
     <div 
@@ -113,20 +122,30 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
                     </div>
                 </div>
                 
-                {/* Source Link */}
-                {assignment.url && (
-                    <div className="pt-2">
-                        <a 
-                            href={assignment.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-slate-900/20"
-                        >
-                            <ExternalLink size={14} />
-                            Gå till annons hos {assignment.source || 'källa'}
-                        </a>
-                    </div>
-                )}
+                {/* Source Link (Smart Fallback) */}
+                <div className="pt-2">
+                    <a 
+                        href={targetUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-xs font-bold transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${
+                            isFallback 
+                            ? 'bg-slate-700 hover:bg-slate-800 shadow-slate-900/10' 
+                            : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
+                        }`}
+                    >
+                        {isFallback ? <Search size={14} /> : <ExternalLink size={14} />}
+                        {isFallback 
+                            ? `Sök manuellt: ${assignment.client}` 
+                            : `Ansök hos ${assignment.source || 'källa'}`
+                        }
+                    </a>
+                    {isFallback && (
+                         <p className="text-[10px] text-slate-400 text-center mt-1">
+                             Direktlänk saknas – omdirigerar till Google Sök efter konsultuppdrag.
+                         </p>
+                    )}
+                </div>
             </div>
         )}
       </div>

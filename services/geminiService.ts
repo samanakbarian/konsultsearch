@@ -90,10 +90,10 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
   const today = new Date().toISOString().split('T')[0];
   const exclusionList = existingAssignments.map(a => a.title).join(', ');
   
-  // STRICT PROMPT: No URLs requested
+  // STRICT PROMPT: No URLs requested, Focus on CONSULTING GIGS
   const prompt = `
-    Role: Sales Manager.
-    Task: Find active IT assignments in Sweden.
+    Role: Sales Manager specializing in IT Consulting.
+    Task: Find active **CONSULTANT ASSIGNMENTS** (Konsultuppdrag) in Sweden.
     Date: ${today}.
     
     Criteria:
@@ -102,11 +102,13 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
     - Location: ${criteria.location}
     
     Instructions:
-    1. Identify the CLIENT (End Customer) clearly.
-    2. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
-    3. If the Google Search tool provides a specific URL to the ad, include it in 'url'. Otherwise leave 'url' empty.
-    4. Ensure the assignment is active/recent.
-    5. STRICTLY respect the Location criteria (${criteria.location}).
+    1. **STRICTLY EXCLUDE permanent jobs** (Tillsvidareanställning/Fast anställning).
+    2. Look for keywords like "Konsultuppdrag", "Interim", "Freelance", "Contract", "Uppdrag".
+    3. Identify the CLIENT (End Customer) clearly.
+    4. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
+    5. **CRITICAL: You CANNOT guess URLs.** Only include a 'url' if the Google Search tool explicitly returns a link to the assignment. If not found, leave 'url' as empty string "".
+    6. Ensure the assignment is active/recent.
+    7. STRICTLY respect the Location criteria (${criteria.location}).
 
     Exclude titles: [${exclusionList}]
 
@@ -117,7 +119,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
         "client": "string",
         "source": "string (The platform/broker where this was found)",
         "url": "string (URL to the ad if available, else empty string)",
-        "description": "string (Short summary in Swedish)",
+        "description": "string (Short summary in Swedish, emphasize project length/scope)",
         "location": "string",
         "deadline": "string (or 'Snarast')",
         "datePosted": "string (e.g. '2 dagar sedan')",
@@ -133,7 +135,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
       config: {
         tools: [{ googleSearch: {} }],
         temperature: 0.0,
-        systemInstruction: "You are a strict data scraper. JSON output only.",
+        systemInstruction: "You are a strict data scraper looking for B2B consultant assignments only. JSON output only.",
       },
     });
 
