@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Assignment } from '../types';
-import { Building2, MapPin, Check, Plus, CalendarClock, Globe2, Zap, ChevronDown, ChevronUp, FileText, AlertCircle } from 'lucide-react';
+import { Building2, MapPin, Check, Plus, CalendarClock, Globe2, Zap, ChevronDown, ChevronUp, FileText, AlertCircle, ExternalLink, Link2 } from 'lucide-react';
 
 interface Props {
   assignment: Assignment;
@@ -54,10 +54,17 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 truncate">
                  {assignment.client}
                </span>
-               <span className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
-                 <MapPin size={12} className="text-emerald-400" />
-                 {assignment.location}
-               </span>
+               <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
+                    <MapPin size={12} className="text-emerald-400" />
+                    {assignment.location}
+                  </span>
+                  {assignment.source && (
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded text-emerald-800/80 bg-emerald-50/50">
+                        <Link2 size={10} /> {assignment.source}
+                    </span>
+                  )}
+               </div>
              </div>
            </div>
         </div>
@@ -105,6 +112,21 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
                         </div>
                     </div>
                 </div>
+                
+                {/* Source Link */}
+                {assignment.url && (
+                    <div className="pt-2">
+                        <a 
+                            href={assignment.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-slate-900/20"
+                        >
+                            <ExternalLink size={14} />
+                            Gå till annons hos {assignment.source || 'källa'}
+                        </a>
+                    </div>
+                )}
             </div>
         )}
       </div>

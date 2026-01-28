@@ -99,11 +99,14 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
     Criteria:
     - Role: ${criteria.role}
     - Tech: ${criteria.techStack}
+    - Location: ${criteria.location}
     
     Instructions:
-    1. Identify the CLIENT or BROKER name clearly (e.g. Ework, Verama, Trafikverket).
-    2. Do NOT guess specific deep-links or URLs. Do NOT output a 'url' field.
-    3. Ensure the assignment is active/recent.
+    1. Identify the CLIENT (End Customer) clearly.
+    2. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
+    3. If the Google Search tool provides a specific URL to the ad, include it in 'url'. Otherwise leave 'url' empty.
+    4. Ensure the assignment is active/recent.
+    5. STRICTLY respect the Location criteria (${criteria.location}).
 
     Exclude titles: [${exclusionList}]
 
@@ -111,7 +114,9 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
     [
       {
         "title": "string",
-        "client": "string (Broker or End Customer)",
+        "client": "string",
+        "source": "string (The platform/broker where this was found)",
+        "url": "string (URL to the ad if available, else empty string)",
         "description": "string (Short summary in Swedish)",
         "location": "string",
         "deadline": "string (or 'Snarast')",
@@ -128,7 +133,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
       config: {
         tools: [{ googleSearch: {} }],
         temperature: 0.0,
-        systemInstruction: "You are a strict data scraper. JSON output only. No fake links.",
+        systemInstruction: "You are a strict data scraper. JSON output only.",
       },
     });
 

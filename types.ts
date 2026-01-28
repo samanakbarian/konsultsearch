@@ -24,7 +24,8 @@ export interface Assignment {
   client: string;
   description: string;
   location: string;
-  url?: string;
+  source?: string; // e.g. "Ework", "Verama", "LinkedIn"
+  url?: string;    // Direct link to ad
   deadline?: string;
   datePosted?: string;
   isActive?: boolean;
