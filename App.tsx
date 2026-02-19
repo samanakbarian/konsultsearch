@@ -9,7 +9,7 @@ import { SAMPLE_PROMPTS } from './constants';
 import { 
   BrainCircuit, ShieldAlert, Users, Briefcase, 
   ShoppingCart, Sparkles, LayoutDashboard, 
-  Settings, LogOut, ChevronRight, X
+  Settings, LogOut, ChevronRight, X, ExternalLink
 } from 'lucide-react';
 
 type View = 'consultants' | 'assignments' | 'matchmaking';
@@ -221,7 +221,7 @@ const App: React.FC = () => {
                               rank={i+1}
                               isSelected={!!selectedCandidates.find(x => x.id === c.id)}
                               onToggleSelect={(cand) => toggleCandidate(cand)}
-                              compactMode={true}
+                              // compactMode removed to show full details
                             />
                           </div>
                       ))}
@@ -251,7 +251,7 @@ const App: React.FC = () => {
                             assignment={a}
                             isSelected={!!selectedAssignments.find(x => x.id === a.id)}
                             onToggleSelect={(assign) => toggleAssignment(assign)}
-                            compactMode={true}
+                            // compactMode removed to show full details
                           />
                         </div>
                       ))}
@@ -397,40 +397,57 @@ const CandidateDetailView = ({ candidate }: { candidate: Candidate }) => (
   </div>
 );
 
-const AssignmentDetailView = ({ assignment }: { assignment: Assignment }) => (
-  <div className="space-y-6">
-     <div className="flex items-start gap-4">
-        <div className="w-16 h-16 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 shrink-0">
-           <Briefcase size={32} />
-        </div>
-        <div>
-           <h2 className="text-xl font-bold text-slate-900 leading-tight">{assignment.title}</h2>
-           <p className="text-slate-500 font-medium mt-1">{assignment.client}</p>
-        </div>
-     </div>
+const AssignmentDetailView = ({ assignment }: { assignment: Assignment }) => {
+  // Smart Link Logic: Same as in Card
+  const getSafeLink = () => {
+    if (assignment.url && assignment.url.startsWith('http')) {
+      return assignment.url;
+    }
+    const query = `${assignment.title} ${assignment.client} ${assignment.location} konsultuppdrag`;
+    return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  };
+  
+  const safeLink = getSafeLink();
+  const isSearchFallback = !assignment.url || !assignment.url.startsWith('http');
 
-     <div className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-           <div className="text-[10px] font-bold uppercase text-slate-400">Plats</div>
-           <div className="font-medium text-slate-700">{assignment.location}</div>
-        </div>
-        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-           <div className="text-[10px] font-bold uppercase text-slate-400">Start / Deadline</div>
-           <div className="font-medium text-slate-700">{assignment.deadline || 'Snarast'}</div>
-        </div>
-     </div>
+  return (
+    <div className="space-y-6">
+       <div className="flex items-start gap-4">
+          <div className="w-16 h-16 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 shrink-0">
+             <Briefcase size={32} />
+          </div>
+          <div>
+             <h2 className="text-xl font-bold text-slate-900 leading-tight">{assignment.title}</h2>
+             <p className="text-slate-500 font-medium mt-1">{assignment.client}</p>
+          </div>
+       </div>
 
-     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <h4 className="text-xs font-bold uppercase text-teal-500 mb-3">Uppdragsbeskrivning</h4>
-        <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{assignment.description}</p>
-     </div>
-     
-     {assignment.url && (
-        <a href={assignment.url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-colors">
-           Ansök externt <ChevronRight size={16}/>
-        </a>
-     )}
-  </div>
-);
+       <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+             <div className="text-[10px] font-bold uppercase text-slate-400">Plats</div>
+             <div className="font-medium text-slate-700">{assignment.location}</div>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+             <div className="text-[10px] font-bold uppercase text-slate-400">Start / Deadline</div>
+             <div className="font-medium text-slate-700">{assignment.deadline || 'Snarast'}</div>
+          </div>
+       </div>
+
+       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h4 className="text-xs font-bold uppercase text-teal-500 mb-3">Uppdragsbeskrivning</h4>
+          <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{assignment.description}</p>
+       </div>
+       
+       <a 
+         href={safeLink} 
+         target="_blank" 
+         rel="noreferrer" 
+         className={`flex items-center justify-center gap-2 w-full py-4 text-white rounded-xl font-bold transition-colors ${isSearchFallback ? 'bg-teal-600 hover:bg-teal-700' : 'bg-slate-900 hover:bg-black'}`}
+       >
+          {isSearchFallback ? 'Sök annons på Google' : 'Ansök externt'} <ExternalLink size={16}/>
+       </a>
+    </div>
+  );
+};
 
 export default App;

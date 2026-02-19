@@ -4,29 +4,70 @@ import { SearchCriteria, SearchResult, Assignment, Candidate, MatchResult } from
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Using Flash for speed, but with very strict settings
+// Using Flash for speed/cost, but with high-quality prompting
 const modelId = "gemini-3-flash-preview"; 
 
+// Robust retry wrapper for API calls to handle transient network/RPC errors
+async function generateContentWithRetry(params: any, maxRetries = 3) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ai.models.generateContent({
+        model: modelId,
+        ...params
+      });
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`Gemini API attempt ${i + 1} failed:`, error.message);
+      
+      // Check for transient errors (500, xhr, fetch failures)
+      const isTransient = 
+        error.status === 500 || 
+        error.message?.toLowerCase().includes('xhr') || 
+        error.message?.toLowerCase().includes('fetch') ||
+        error.message?.toLowerCase().includes('network') ||
+        error.message?.toLowerCase().includes('rpc');
+
+      if (!isTransient) throw error; // Don't retry on 400s or logic errors
+
+      // Exponential backoff: 1s, 2s, 4s
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export const findCandidates = async (criteria: SearchCriteria): Promise<SearchResult> => {
-  // STRICT PROMPT: No URLs requested
+  // Construct a "Mental" Boolean string for the AI to guide its tool use
+  const techTerms = criteria.techStack.split(',').join(' OR ');
+  const constructedBoolean = `site:linkedin.com/in ("${criteria.role}" OR "Systemutvecklare" OR "Konsult") AND (${techTerms}) AND "${criteria.location}"`;
+
   const prompt = `
-    Role: Technical Recruiter.
-    Task: Extract **10-15** real IT consultant profiles based on search criteria.
+    Role: Expert Technical Sourcer / Headhunter.
+    Goal: Find 10-15 REAL, verifyable IT consultants/specialists matching the criteria.
     
-    Criteria:
-    - Role: ${criteria.role}
-    - Tech: ${criteria.techStack}
+    SEARCH CRITERIA:
+    - Role: ${criteria.role} (Look for synonyms like Systemutvecklare, Programmerare, Specialist)
+    - Tech Stack: ${criteria.techStack}
+    - Location: ${criteria.location} (Prioritize exact city matches, then surrounding region)
     - Level: ${criteria.experienceLevel}
-    - Location: ${criteria.location}
     
-    Instructions:
-    1. Find **10-15** REAL people. If fewer are found, return all found.
-    2. Do NOT guess URLs. Do NOT output a profileUrl field.
-    3. Focus on accurate Names, Current Titles, and Skills.
+    EXECUTION STEPS (Use Google Search Tool):
+    1. Perform an X-Ray search targeting LinkedIn profiles using logic similar to: ${constructedBoolean}
+    2. Look for profiles explicitly mentioning "Konsult", "Freelance", "Egenföretagare", or working at known consultancy firms (e.g., Knowit, Tietoevry, Sogeti, Consid, etc. in ${criteria.location}).
+    3. Filter out students or people who haven't updated their profile in years.
     
+    OUTPUT RULES:
+    1. **REAL PEOPLE ONLY**: Do not hallucinate names. If you find fewer than 10, return what you found.
+    2. **Skills**: Extract actual skills listed in their summary/headline.
+    3. **Match Score**: calculate based on keyword overlap (Tech + Role + Location).
+    4. **Justification**: Write a short pitch in Swedish regarding why they are a good fit for a ${criteria.role} role in ${criteria.location}.
+
     Return JSON structure:
     {
-      "generatedBooleanString": "string (The boolean query you used)",
+      "generatedBooleanString": "${constructedBoolean}",
       "candidates": [
         {
           "name": "string",
@@ -34,35 +75,32 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
           "location": "string",
           "matchScore": number (0-100),
           "skills": ["string"],
-          "summary": "string (Short professional summary in Swedish)",
-          "justification": "string (Why is this person a match? in Swedish)"
+          "summary": "string (Professional summary/Headline)",
+          "justification": "string (Why this profile matches)"
         }
       ]
     }
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelId,
+    const response = await generateContentWithRetry({
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        // Temperature 0.0 ensures the model is as deterministic and factual as possible
-        temperature: 0.0, 
-        systemInstruction: "You are a precise data extraction engine. You output valid JSON only. You do not hallucinate links.",
+        temperature: 0.1, // Low temp for factual extraction
+        systemInstruction: "You are a specialized Recruiter Bot. You extract real public profile data from search results. You prioritize local candidates.",
       },
     });
 
     let text = response.text;
     
-    // Fallback extraction
     if (!text && response.candidates?.[0]?.content?.parts) {
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) throw new Error("Inget svar från AI.");
+    if (!text) throw new Error("Kunde inte generera kandidater. Försök specificera sökningen.");
     
-    // JSON Cleaning
+    // Robust JSON cleanup
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
     if (start !== -1 && end !== -1 && end > start) {
@@ -73,7 +111,11 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
 
     const parsedData = JSON.parse(text) as SearchResult;
     
-    // Assign IDs client-side
+    // Fallback: If AI returns empty boolean string, use the constructed one
+    if (!parsedData.generatedBooleanString) {
+        parsedData.generatedBooleanString = constructedBoolean;
+    }
+
     parsedData.candidates = parsedData.candidates.map((c, i) => ({
       ...c,
       id: `cand_${i}_${Date.now()}`
@@ -82,7 +124,7 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
 
   } catch (error) {
     console.error("Candidate Search Error:", error);
-    throw new Error("Kunde inte hämta kandidater. Försök igen.");
+    throw new Error("Sökningen misslyckades. Försök att förenkla kriterierna eller kontrollera din anslutning.");
   }
 };
 
@@ -90,26 +132,32 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
   const today = new Date().toISOString().split('T')[0];
   const exclusionList = existingAssignments.map(a => a.title).join(', ');
   
-  // STRICT PROMPT: No URLs requested, Focus on CONSULTING GIGS
   const prompt = `
-    Role: Sales Manager specializing in IT Consulting.
-    Task: Find **at least 10** active **CONSULTANT ASSIGNMENTS** (Konsultuppdrag) in Sweden.
+    Role: B2B Sales Agent for IT Consultants.
+    Task: Find active **Consultant Assignments** (Konsultuppdrag) in Sweden.
     Date: ${today}.
     
-    Criteria:
+    TARGET CRITERIA:
     - Role: ${criteria.role}
     - Tech: ${criteria.techStack}
     - Location: ${criteria.location}
     
-    Instructions:
-    1. Find **10-15** distinct assignments. If fewer exist, return all available.
-    2. **STRICTLY EXCLUDE permanent jobs** (Tillsvidareanställning/Fast anställning).
-    3. Look for keywords like "Konsultuppdrag", "Interim", "Freelance", "Contract", "Uppdrag".
-    4. Identify the CLIENT (End Customer) clearly.
-    5. Identify the SOURCE/BROKER (e.g., Ework, Verama, Cinode, Arbetsförmedlingen, or "Direkt").
-    6. **CRITICAL: You CANNOT guess URLs.** Only include a 'url' if the Google Search tool explicitly returns a link to the assignment. If not found, leave 'url' as empty string "".
-    7. Ensure the assignment is active/recent.
-    8. STRICTLY respect the Location criteria (${criteria.location}).
+    SEARCH STRATEGY (Use Google Search):
+    1. Search specific Swedish broker sites and job boards:
+       - "site:verama.com ${criteria.role} ${criteria.location}"
+       - "site:eworkgroup.com ${criteria.role} ${criteria.location}"
+       - "site:brainville.com ${criteria.role}"
+       - "site:uppdrag.se ${criteria.role}"
+       - "site:linkedin.com/jobs ${criteria.role} ${criteria.location} (Konsult OR Contract)"
+    2. Look for keywords: "Start omgående", "Timpris", "Konsultuppdrag", "Interim".
+    3. **Exclude** listings that say "Tillsvidare", "Fast anställning", "Permanent".
+    
+    EXTRACTION RULES:
+    1. **Active Listings Only**: Prioritize results indexed in the last month.
+    2. **Real URLs**: ONLY include a URL if it is explicitly present in the search result snippet (e.g., https://verama.com/jobs/123). DO NOT construct, guess, or hallucinate URLs. If you don't find a direct link, leave "url" as empty string "".
+    3. **Source**: Identify where you found it (e.g. "Verama", "LinkedIn", "Ework").
+    4. **Client**: If the end-client is hidden (common in brokerage), write "Confidential / Via Broker".
+    5. **Description**: Extract a DETAILED description (at least 2-3 sentences). Include specific Tech Stack required, Duration, and Start Date if available.
 
     Exclude titles: [${exclusionList}]
 
@@ -118,25 +166,24 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
       {
         "title": "string",
         "client": "string",
-        "source": "string (The platform/broker where this was found)",
-        "url": "string (URL to the ad if available, else empty string)",
-        "description": "string (Short summary in Swedish, emphasize project length/scope)",
+        "source": "string",
+        "url": "string (or empty)",
+        "description": "string (Detailed summary with tech stack and duration)",
         "location": "string",
-        "deadline": "string (or 'Snarast')",
-        "datePosted": "string (e.g. '2 dagar sedan')",
+        "deadline": "string",
+        "datePosted": "string",
         "isActive": boolean
       }
     ]
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelId,
+    const response = await generateContentWithRetry({
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        temperature: 0.0,
-        systemInstruction: "You are a strict data scraper looking for B2B consultant assignments only. JSON output only.",
+        temperature: 0.1,
+        systemInstruction: "You are a strict data scraper for B2B assignments. JSON output only. DO NOT HALLUCINATE LINKS.",
       },
     });
 
@@ -146,7 +193,7 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) throw new Error("Inget svar från AI.");
+    if (!text) throw new Error("Hittade inga uppdrag.");
     
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
@@ -165,31 +212,37 @@ export const searchAssignments = async (criteria: SearchCriteria, existingAssign
 
   } catch (error) {
     console.error("Assignment Search Error:", error);
-    throw new Error("Kunde inte hitta uppdrag.");
+    throw new Error("Kunde inte hämta uppdrag just nu. Försök igen eller justera sökningen.");
   }
 };
 
 export const performMatchmaking = async (candidates: Candidate[], assignments: Assignment[]): Promise<MatchResult[]> => {
   if (candidates.length === 0 || assignments.length === 0) return [];
 
+  // Limit payload size to avoid token limits
   const candStr = JSON.stringify(candidates.map(c => ({ id: c.id, name: c.name, skills: c.skills, summary: c.summary })));
-  const assignStr = JSON.stringify(assignments.map(a => ({ id: a.id, title: a.title, client: a.client, description: a.description })));
+  const assignStr = JSON.stringify(assignments.map(a => ({ id: a.id, title: a.title, client: a.client, description: a.description, tech: a.description })));
 
   const prompt = `
     Role: Senior Account Manager.
-    Task: Matrix Match Consultants to Assignments.
+    Task: Evaluate fit between Consultants and Assignments.
     
     Consultants: ${candStr}
     Assignments: ${assignStr}
 
-    Return JSON array of matches. Only include meaningful matches (>60%).
-    
+    Instructions:
+    1. Analyze Technical Skills overlap (Critical).
+    2. Analyze Seniority/Experience Level fit.
+    3. Return ONLY matches with a score > 60.
+    4. Provide specific reasoning in Swedish.
+
+    Return JSON array:
     [
       {
         "assignmentId": "string",
         "candidateId": "string",
         "matchScore": number (0-100),
-        "reason": "string (Swedish analysis)",
+        "reason": "string",
         "strengths": ["string"],
         "gaps": ["string"]
       }
@@ -197,8 +250,7 @@ export const performMatchmaking = async (candidates: Candidate[], assignments: A
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelId,
+    const response = await generateContentWithRetry({
       contents: prompt,
       config: {
         temperature: 0.1,
@@ -212,7 +264,7 @@ export const performMatchmaking = async (candidates: Candidate[], assignments: A
         text = response.candidates[0].content.parts.map(p => p.text).join('');
     }
 
-    if (!text) throw new Error("Inget svar vid matchning.");
+    if (!text) throw new Error("Matchning misslyckades.");
 
     const start = text.indexOf('[');
     const end = text.lastIndexOf(']');
