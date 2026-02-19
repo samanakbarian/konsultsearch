@@ -6,31 +6,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TalentAnalytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg-color: #f8fafc;
+      }
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background: #f3f5f8; /* Soft blue-grey base */
+        background-color: var(--bg-color);
         background-image: 
-          radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
-          radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), 
-          radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+          radial-gradient(at 0% 0%, hsla(250, 60%, 96%, 1) 0, transparent 50%), 
+          radial-gradient(at 100% 0%, hsla(180, 50%, 96%, 1) 0, transparent 50%), 
+          radial-gradient(at 100% 100%, hsla(250, 40%, 98%, 1) 0, transparent 50%);
+        background-attachment: fixed;
+        color: #0f172a;
         -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       
-      /* Custom scrollbar */
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      /* Refined Scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        border-radius: 4px;
+        border-radius: 10px;
+        transition: background 0.2s;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
+      }
+
+      /* Utility classes for text gradients */
+      .text-gradient-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
       }
     </style>
   <script type="importmap">
