@@ -60,7 +60,7 @@ const AssignmentCard: React.FC<Props> = ({ assignment, isSelected, onToggleSelec
        {/* Description Snippet - Increased line clamp for more info */}
        {!compactMode && assignment.description && (
          <div className="mb-4 flex-grow bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
-           <p className="text-xs text-slate-600 line-clamp-5 leading-relaxed font-medium">
+           <p className="text-xs text-slate-600 line-clamp-6 leading-relaxed font-medium">
              {assignment.description}
            </p>
          </div>

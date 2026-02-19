@@ -41,7 +41,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, rank, isSelect
        {/* Expanded Info: Summary */}
        {!compactMode && candidate.summary && (
          <div className="mb-4 flex-grow">
-           <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+           <p className="text-sm text-slate-600 line-clamp-6 leading-relaxed">
              {candidate.summary}
            </p>
          </div>

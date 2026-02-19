@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TalentAnalytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            },
+            colors: {
+              slate: {
+                850: '#1e293b', // Custom depth
+                900: '#0f172a',
+              }
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       :root {
@@ -14,10 +31,12 @@
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
         background-color: var(--bg-color);
+        /* Refined mesh gradient for a cleaner, more professional look */
         background-image: 
-          radial-gradient(at 0% 0%, hsla(250, 60%, 96%, 1) 0, transparent 50%), 
-          radial-gradient(at 100% 0%, hsla(180, 50%, 96%, 1) 0, transparent 50%), 
-          radial-gradient(at 100% 100%, hsla(250, 40%, 98%, 1) 0, transparent 50%);
+          radial-gradient(at 0% 0%, hsla(243, 75%, 96%, 1) 0px, transparent 50%), 
+          radial-gradient(at 100% 0%, hsla(172, 70%, 96%, 1) 0px, transparent 50%), 
+          radial-gradient(at 100% 100%, hsla(243, 60%, 97%, 1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, hsla(210, 50%, 98%, 1) 0px, transparent 50%);
         background-attachment: fixed;
         color: #0f172a;
         -webkit-font-smoothing: antialiased;
@@ -29,30 +48,52 @@
         scroll-behavior: smooth;
       }
       
-      /* Refined Scrollbar */
+      /* Elegant Scrollbar */
       ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        width: 10px;
+        height: 10px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
         background: #cbd5e1;
+        border: 3px solid #f8fafc;
         border-radius: 10px;
-        transition: background 0.2s;
+        transition: background 0.2s ease;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
       }
 
-      /* Utility classes for text gradients */
-      .text-gradient-primary {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+      /* Custom Animations utilized in App.tsx */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
-      
+      @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideInRight {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+      }
+      @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes zoomIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+      .animate-fade-in-down { animation: fadeInDown 0.4s ease-out forwards; }
+      .animate-slide-in-right { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .animate-slide-up-fade { animation: slideUpFade 0.6s ease-out forwards; }
+      .animate-zoom-in { animation: zoomIn 0.2s ease-out forwards; }
+
       .glass-panel {
         background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(20px);

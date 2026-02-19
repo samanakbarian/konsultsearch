@@ -61,9 +61,10 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
     
     OUTPUT RULES:
     1. **REAL PEOPLE ONLY**: Do not hallucinate names. If you find fewer than 10, return what you found.
-    2. **Skills**: Extract actual skills listed in their summary/headline.
-    3. **Match Score**: calculate based on keyword overlap (Tech + Role + Location).
-    4. **Justification**: Write a short pitch in Swedish regarding why they are a good fit for a ${criteria.role} role in ${criteria.location}.
+    2. **Skills**: General list of skills relevant to the role.
+    3. **Extracted Skills (CRITICAL)**: Analyze the candidate's summary and headline. Explicitly extract a distinct list of hard technical skills (e.g., 'React', 'Kubernetes', 'Python', 'AWS') found in the text.
+    4. **Match Score**: calculate based on keyword overlap (Tech + Role + Location).
+    5. **Justification**: Write a short pitch in Swedish regarding why they are a good fit for a ${criteria.role} role in ${criteria.location}.
 
     Return JSON structure:
     {
@@ -75,6 +76,7 @@ export const findCandidates = async (criteria: SearchCriteria): Promise<SearchRe
           "location": "string",
           "matchScore": number (0-100),
           "skills": ["string"],
+          "extractedSkills": ["string"],
           "summary": "string (Professional summary/Headline)",
           "justification": "string (Why this profile matches)"
         }

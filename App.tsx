@@ -384,8 +384,27 @@ const CandidateDetailView = ({ candidate }: { candidate: Candidate }) => (
         </div>
      )}
 
+     {/* AI Extracted Skills Section */}
+     {candidate.extractedSkills && candidate.extractedSkills.length > 0 && (
+        <div className="bg-white p-5 rounded-2xl border-2 border-indigo-50 shadow-sm relative overflow-hidden group">
+           {/* Decorative Blur */}
+           <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-100 rounded-full blur-xl opacity-50 group-hover:scale-125 transition-transform"></div>
+           
+           <h4 className="text-xs font-bold uppercase text-indigo-600 mb-3 flex items-center gap-2 relative z-10">
+              <Sparkles size={14} className="fill-indigo-100" /> AI-Verifierade Kompetenser
+           </h4>
+           <div className="flex flex-wrap gap-2 relative z-10">
+              {candidate.extractedSkills.map((s, i) => (
+                 <span key={i} className="px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-bold shadow-sm">
+                    {s}
+                 </span>
+              ))}
+           </div>
+        </div>
+     )}
+
      <div>
-        <h4 className="text-xs font-bold uppercase text-slate-400 mb-3">Kompetensprofil</h4>
+        <h4 className="text-xs font-bold uppercase text-slate-400 mb-3">Övriga Nyckelord</h4>
         <div className="flex flex-wrap gap-2">
            {candidate.skills.map((s, i) => (
               <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 shadow-sm">

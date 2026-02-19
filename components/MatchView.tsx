@@ -4,7 +4,7 @@ import { performMatchmaking } from '../services/geminiService';
 import { 
   Sparkles, Trash2, ArrowRightLeft, PlayCircle, 
   CheckCircle2, Loader2, BrainCircuit, Building2, 
-  ThumbsUp, AlertTriangle, MapPin, Clock
+  ThumbsUp, AlertTriangle, MapPin, Clock, Info, X
 } from 'lucide-react';
 
 interface Props {
@@ -26,6 +26,7 @@ const MatchView: React.FC<Props> = ({ selectedCandidates, selectedAssignments, o
   const [isMatching, setIsMatching] = useState(false);
   const [hasRun, setHasRun] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
 
   const handleMatch = async () => {
     if (selectedCandidates.length === 0 || selectedAssignments.length === 0) return;
@@ -86,22 +87,65 @@ const MatchView: React.FC<Props> = ({ selectedCandidates, selectedAssignments, o
     <div className="space-y-10 pb-20">
       
       {/* --- HERO / CONTROL CENTER --- */}
-      <div className={`relative overflow-hidden transition-all duration-500 rounded-3xl shadow-2xl shadow-indigo-900/20 flex flex-col md:flex-row items-center justify-between gap-8 ${isMatching ? 'bg-slate-900 p-12 min-h-[400px]' : 'bg-gradient-to-br from-slate-900 to-indigo-900 p-10'}`}>
+      <div className={`relative overflow-visible transition-all duration-500 rounded-3xl shadow-2xl shadow-indigo-900/20 flex flex-col md:flex-row items-center justify-between gap-8 ${isMatching ? 'bg-slate-900 p-12 min-h-[400px]' : 'bg-gradient-to-br from-slate-900 to-indigo-900 p-10'}`}>
         
-        {/* Background FX */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        {/* Background FX (only visible when not overflow hidden, masked by container if needed, but we need visible for tooltip) */}
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl"></div>
+        </div>
         
         {/* CONTENT */}
         <div className="relative z-10 w-full">
           {!isMatching ? (
             <div className="flex flex-col md:flex-row justify-between items-center w-full gap-8">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-4">
+                  <h2 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-4 relative">
                     <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg">
                       <BrainCircuit className="text-indigo-300" size={32} /> 
                     </div>
                     Matchningsmotor
+                    
+                    {/* Info Button & Tooltip */}
+                    <div className="relative ml-1">
+                        <button 
+                          onClick={() => setShowInfo(!showInfo)}
+                          className="p-1.5 rounded-full hover:bg-white/10 text-indigo-200 transition-colors"
+                        >
+                           <Info size={20} />
+                        </button>
+                        
+                        {showInfo && (
+                          <div className="absolute top-full left-0 mt-4 w-80 md:w-96 bg-white text-slate-800 p-5 rounded-2xl shadow-2xl z-50 text-left border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+                              <div className="flex justify-between items-start mb-3">
+                                  <h4 className="font-bold text-indigo-900 text-sm uppercase tracking-wider flex items-center gap-2">
+                                    <Sparkles size={14} className="text-indigo-500"/> AI-Logik
+                                  </h4>
+                                  <button onClick={() => setShowInfo(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                    <X size={16}/>
+                                  </button>
+                              </div>
+                              <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
+                                 Vi skickar en strukturerad "Persona Prompt" till Gemini 1.5 Pro där den agerar som en <strong>Senior Account Manager</strong>.
+                              </p>
+                              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-2">
+                                <div className="flex gap-2 text-xs">
+                                   <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold">1</div>
+                                   <p className="text-slate-600"><strong className="text-slate-800">Teknisk Analys:</strong> Matchar "Hard Skills" i konsultprofilen mot uppdragets krav.</p>
+                                </div>
+                                <div className="flex gap-2 text-xs">
+                                   <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold">2</div>
+                                   <p className="text-slate-600"><strong className="text-slate-800">Nivåbedömning:</strong> Säkerställer att senioritet (t.ex. Lead/Junior) stämmer överens.</p>
+                                </div>
+                                <div className="flex gap-2 text-xs">
+                                   <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold">3</div>
+                                   <p className="text-slate-600"><strong className="text-slate-800">Tröskelvärde:</strong> Endast matchningar med &gt;60% poäng presenteras.</p>
+                                </div>
+                              </div>
+                              <div className="absolute -top-2 left-6 w-4 h-4 bg-white rotate-45 border-l border-t border-slate-100"></div>
+                          </div>
+                        )}
+                    </div>
                   </h2>
                   <p className="text-indigo-200 text-lg mt-4 font-medium max-w-xl">
                     Analysera <strong className="text-white">{selectedCandidates.length} konsulter</strong> mot <strong className="text-white">{selectedAssignments.length} uppdrag</strong> med hjälp av Gemini 1.5 Pro.

@@ -13,6 +13,7 @@ export interface Candidate {
   location: string;
   matchScore: number;
   skills: string[];
+  extractedSkills?: string[]; // Explicitly extracted hard skills
   summary: string;
   justification: string;
   profileUrl?: string;
